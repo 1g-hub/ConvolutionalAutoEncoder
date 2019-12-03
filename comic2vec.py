@@ -9,7 +9,7 @@ class Comic2Vec:
     def __init__(self):
         pass
 
-    def comic2vec(self, data, model_name, mode_out, mode_auto, experiment, weight_all=False):
+    def comic2vec(self, data, model_name, mode_out, mode_auto):
         """
         :param data:画像データ(numpy)
         :param model_name:使いたいmodelのhdfファイル．comic2vec.pyから相対パスを指定
@@ -33,42 +33,27 @@ class Comic2Vec:
         activation_model = models.Model(input=model.input, outputs=model.get_layer(layer_name).output)
         out = activation_model.predict(data)
         print("分散表現のサイズは{}です．".format(out.shape))
-        try:
-            os.makedirs("distributed/exp{}".format(experiment))
-        except:
-            pass
+        os.makedirs("distributed", exist_ok=True)
 
         if mode_auto == "AE":
-            if weight_all:
-                np.save("distributed/exp{}/{}_weight_all.npy".format(experiment, mode_auto), out)
-            else:
-                np.save("distributed/exp{}/{}.npy".format(experiment, mode_auto), out)
+            np.save("distributed/{}.npy".format(mode_auto), out)
             print("分散表現をnpy形式で保存しました．")
             return out
 
         elif mode_auto == "CAE":
             if mode_out == "raw":
-                if weight_all:
-                    np.save("distributed/exp{}/{}_weight_all.npy".format(experiment, mode_auto), out)
-                else:
-                    np.save("distributed/exp{}/{}.npy".format(experiment, mode_auto), out)
+                np.save("distributed/{}.npy".format(mode_auto), out)
                 print("分散表現をnpy形式で保存しました．")
                 return out
             elif mode_out == "hwf":
                 out = out.reshape((out.shape[0], out.shape[1] * out.shape[2] * out.shape[3]))
-                if weight_all:
-                    np.save("distributed/exp{}/{}_weight_all.npy".format(experiment, mode_auto), out)
-                else:
-                    np.save("distributed/exp{}/{}.npy".format(experiment, mode_auto), out)
+                np.save("distributed/{}.npy".format(mode_auto), out)
                 print("分散表現をnpy形式で保存しました．")
                 return out
             elif mode_out == "hw":
                 out = np.sum(out, axis=3)
                 out = out.reshape((out.shape[0], out.shape[1] * out.shape[2]))
-                if weight_all:
-                    np.save("distributed/exp{}/{}_weight_all.npy".format(experiment, mode_auto), out)
-                else:
-                    np.save("distributed/exp{}/{}.npy".format(experiment, mode_auto), out)
+                np.save("distributed/{}.npy".format(mode_auto), out)
                 print("分散表現をnpy形式で保存しました．")
                 return out
             else:
@@ -86,37 +71,14 @@ if __name__ == "__main__":
     # mode_auto = "CAE"
 
     mode_out = "hwf"
+    load_dir = os.path.join(os.getcwd(), "imgs_param/ALL")
 
-    """
-    experiment=1_1:設定ALL
-    experiment=1_2:設定REMOVE_EYE
-    experiment=1_3:設定REMOVE_MOUTH
-    experiment=1_4:設定EYE_ONLY
-    experiment=1_5:設定MOUTH_ONLY
-    """
-    experiment = "1_1"
-    if experiment == "1_1":
-        load_dir = os.path.join(os.getcwd(), "imgs_param/ALL")
-    elif experiment == "1_2":
-        load_dir = os.path.join(os.getcwd(), "imgs_param/REMOVE_EYE")
-    elif experiment == "1_3":
-        load_dir = os.path.join(os.getcwd(), "imgs_param/REMOVE_MOUTH")
-    elif experiment == "1_4":
-        load_dir = os.path.join(os.getcwd(), "imgs_param/EYE_ONLY")
-    elif experiment == "1_5":
-        load_dir = os.path.join(os.getcwd(), "imgs_param/MOUTH_ONLY")
-    else:
-        pass
-    weight_all = False
-    # 重み側をALLに固定
-    if weight_all:
-        model_name = "MODEL/exp1_1/auto/model_{}_auto.hdf5".format(mode_auto)
-    else:
-        model_name = "MODEL/exp{}/auto/model_{}_auto.hdf5".format(experiment, mode_auto)
+    model_name = "MODEL/auto/model_{}_auto.hdf5".format(mode_auto)
+
     loader_ins = Loader(load_dir)
     loader_ins.load(gray=True, size=(196, 136))  # 横×縦
     data = loader_ins.get_data(norm=True)
 
     C2V = Comic2Vec()
-    output = C2V.comic2vec(data, model_name, mode_out=mode_out, mode_auto=mode_auto, experiment=experiment, weight_all=weight_all)
+    output = C2V.comic2vec(data, model_name, mode_out=mode_out, mode_auto=mode_auto)
     print(output.shape)

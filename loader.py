@@ -22,18 +22,18 @@ class Loader:
             return np.array(self.imgs)
 
     def load(self, gray=False, size=(18, 18)):
-        for p_folder in sorted(os.listdir(self.dir)):
-            parent_path = os.path.join(self.dir, p_folder)
-            for folder_ in os.listdir(parent_path):
-                child_path = os.path.join(parent_path, folder_)
-                for i, file in enumerate(os.listdir(child_path)):
-                    file_path = os.path.join(child_path, file)
-                    if gray:
-                        tmp = Image.open(file_path).convert('LA')
-                        mask = tmp.split()[-1]
-                        canvas = Image.new('L', size, (255,))
-                        canvas.paste(tmp, None, mask=mask)
-                        self.imgs.append(np.array(canvas))
-                    else:
-                        img = Image.open(file_path)
-                        self.imgs.append(np.array(img))
+        """
+        :param gray:グレースケールにするかどうか
+        :param size:(横, 縦)の長さのタプル
+        """
+        for file in sorted(os.listdir(self.dir)):
+            file_path = os.path.join(self.dir, file)
+            if gray:
+                tmp = Image.open(file_path).convert('LA')
+                mask = tmp.split()[-1]
+                canvas = Image.new('L', size, (255,))
+                canvas.paste(tmp, None, mask=mask)
+                self.imgs.append(np.array(canvas))
+            else:
+                img = Image.open(file_path)
+                self.imgs.append(np.array(img))
