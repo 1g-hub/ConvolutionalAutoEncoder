@@ -1,0 +1,13 @@
+*.pyc
+.pytest_cache/v/cache/nodeids
+*.eps
+*.hdf5
+*.png
+*.DL-Box
+*.pontaserv
+*.svg
+*.csv
+*.npy
+*.txt
+*.xml
+*.iml
