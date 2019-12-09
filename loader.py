@@ -2,10 +2,8 @@
 #  画像ファイルを読み込み，ラベルとデータに格納し，
 # 学習用データセットと検証用データセットをラベルとともに返す関数を作成する
 import numpy as np
-import cv2 as cv
 import os
-from PIL import Image, ImageOps
-from keras.utils import np_utils
+from PIL import Image
 
 
 class Loader:

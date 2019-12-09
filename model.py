@@ -1,45 +1,22 @@
 import numpy as np
 import os
 from keras import models
-from keras.preprocessing.image import load_img, img_to_array, array_to_img
-from keras.preprocessing.image import random_rotation, random_shift, random_zoom
 from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import MaxPooling2D
-from keras.layers.core import Activation
 from keras.layers.core import Dense
 from keras.layers.core import Dropout
-from keras.layers.core import Flatten
-from keras.layers.core import Reshape
 from keras.models import Sequential
-from keras.applications.vgg16 import VGG16
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping
-import keras.callbacks
-import keras.backend.tensorflow_backend as KTF
 import tensorflow as tf
-from keras.initializers import TruncatedNormal, Constant
-
-from keras.layers import UpSampling2D, GlobalAveragePooling2D
-from keras.models import model_from_json
-from keras.callbacks import LearningRateScheduler
+from keras.layers import UpSampling2D
 from keras.callbacks import ModelCheckpoint
-from keras.optimizers import Adam
-from keras.utils import np_utils
 import matplotlib
-
 from glob import glob
 matplotlib.use("PS")
 import matplotlib.pyplot as plt
-from keras.utils import plot_model
-from keras.models import load_model
-
 from keras.callbacks import TensorBoard
-import cv2 as cv
 from PIL import Image
-
-from keras.preprocessing.image import ImageDataGenerator
-import keras.backend as K
-import optuna
 
 
 def get_latest_modified_file_path(model_dir):
@@ -50,6 +27,9 @@ def get_latest_modified_file_path(model_dir):
 
 
 class TrainValTensorBoard(TensorBoard):
+    """
+    Tensorboard においてtrainとvalidationのロスを同時にプロットする関数
+    """
     def __init__(self, log_dir='./logs', **kwargs):
         # Make the original `TensorBoard` log to a subdirectory 'training'
         training_log_dir = os.path.join(log_dir, 'training')
@@ -165,8 +145,7 @@ def model_cnn_auto(input_shape):
     return model
 
 
-def train_auto(mode_auto, x_train, x_val, input_shape, weights_dir, batch_size=100, verbose=1, epochs=20,
-              validation_split=0.2, show=False, num_compare=5):
+def train_auto(mode_auto, x_train, x_val, input_shape, weights_dir, batch_size=8, verbose=1, epochs=20, num_compare=2):
     if mode_auto == "CAE":
         model = model_cnn_auto(input_shape)
     elif mode_auto == "AE":
@@ -179,6 +158,7 @@ def train_auto(mode_auto, x_train, x_val, input_shape, weights_dir, batch_size=1
     es_cb = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='auto')
 
     os.makedirs("tflog/auto", exist_ok=True)
+    os.makedirs("weights/auto/{}".format(mode_auto), exist_ok=True)
     if mode_auto == "CAE":
         tb_cb = TrainValTensorBoard(log_dir="tflog/auto/{}".format(mode_auto), histogram_freq=1, write_graph=True)
         chkpt = 'weights/auto/CAE/AutoEncoder_Deep_weights.{epoch:02d}-{loss:.2f}-{val_loss:.2f}.hdf5'
@@ -189,36 +169,34 @@ def train_auto(mode_auto, x_train, x_val, input_shape, weights_dir, batch_size=1
         raise Exception
 
     cp_cb = ModelCheckpoint(filepath=chkpt, monitor='val_loss', verbose=1, save_best_only=True, mode='auto', period=5)
-    fit = model.fit(x_train, x_train, batch_size=batch_size, verbose=verbose, epochs=epochs,
-                    validation_split=validation_split, validation_data=(x_val, x_val), shuffle=True,
+    fit = model.fit(x_train, x_train, batch_size=batch_size, verbose=verbose, epochs=epochs, validation_data=(x_val, x_val), shuffle=True,
                     callbacks=[cp_cb])  # tensorboard:tb_cb, checkpoint:cp_cb, EarlyStopping:es_cb
     weights_name = get_latest_modified_file_path(weights_dir)
     print(weights_name, "を最良のモデル重みとします．")
     model = models.load_model(weights_name)
 
-    if show:
-        loss = fit.history['loss']
-        val_loss = fit.history['val_loss']
+    loss = fit.history['loss']
+    val_loss = fit.history['val_loss']
 
-        # lossのグラフ
-        plt.plot(range(len(loss)), loss, marker='.', label='train_loss')
-        plt.plot(range(len(val_loss)), val_loss, marker='.', label='val_loss')
-        plt.legend(loc='best', fontsize=15)
-        plt.grid()
-        plt.xlabel('epoch', fontsize=15)
-        plt.ylabel('loss', fontsize=15)
+    # lossのグラフ
+    plt.plot(range(len(loss)), loss, marker='.', label='train_loss')
+    plt.plot(range(len(val_loss)), val_loss, marker='.', label='val_loss')
+    plt.legend(loc='best', fontsize=15)
+    plt.grid()
+    plt.xlabel('epoch', fontsize=15)
+    plt.ylabel('loss', fontsize=15)
 
-        os.makedirs("figures/loss/", exist_ok=True)
-        os.makedirs("MODEL/auto/", exist_ok=True)
+    os.makedirs("figures/loss/", exist_ok=True)
+    os.makedirs("MODEL/auto/", exist_ok=True)
 
-        plt.savefig("figures/loss/loss_{}_auto.eps".format(mode_auto))
-        plt.savefig("figures/loss/loss_{}_auto.png".format(mode_auto))
-        model.save("MODEL/auto/model_{}_auto.hdf5".format(mode_auto))
-        # モデル表示用(サーバでは使わない)
-        # plot_model(model, "MODEL/auto/model_structure_{}_auto.png".format(mode_auto), show_shapes=True, show_layer_names=True)
+    plt.savefig("figures/loss/loss_{}_auto.eps".format(mode_auto))
+    plt.savefig("figures/loss/loss_{}_auto.png".format(mode_auto))
+    model.save("MODEL/auto/model_{}_auto.hdf5".format(mode_auto))
+    # モデル表示用(サーバでは使わない)
+    # plot_model(model, "MODEL/auto/model_structure_{}_auto.png".format(mode_auto), show_shapes=True, show_layer_names=True)
 
-        print("loss:eps, pngファイルを保存しました．")
-        print("モデルを保存しました．")
+    print("loss:eps, pngファイルを保存しました．")
+    print("モデルを保存しました．")
 
     decoded_imgs = model.predict(x_train)
 
@@ -226,6 +204,6 @@ def train_auto(mode_auto, x_train, x_val, input_shape, weights_dir, batch_size=1
     # 何個表示するか
     for i in range(num_compare):
         # オリジナルのテスト画像を表示
-        Image.fromarray(np.uint8(x_train[i]*255).reshape(136, 196)).save('decoded_imgs/{}/original_{}.png'.format(mode_auto, i))
+        Image.fromarray(np.uint8(x_train[i]*255).reshape(136, 196)).save('decoded_imgs/{}/{}_original.png'.format(mode_auto, i))
         # 変換された画像を表示
-        Image.fromarray(np.uint8(decoded_imgs[i]*255).reshape(136, 196)).save('decoded_imgs/{}/decoded_{}.png'.format(mode_auto, i))
+        Image.fromarray(np.uint8(decoded_imgs[i]*255).reshape(136, 196)).save('decoded_imgs/{}/{}_decoded.png'.format(mode_auto, i))

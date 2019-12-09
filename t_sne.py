@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
-from comic2vec import Comic2Vec
+from image2vec import img2vec
 import numpy as np
 from loader import Loader
 import os
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-from sklearn import preprocessing
-import pandas as pd
-import seaborn as sns
 
 
 def t_sne(mode, mode_auto, mode_out, img_load_dir):
@@ -16,8 +13,7 @@ def t_sne(mode, mode_auto, mode_out, img_load_dir):
         loader_ins = Loader(img_load_dir)
         loader_ins.load(gray=True, size=(196, 136))  # 横×縦
         data = loader_ins.get_data(norm=True)
-        C2V = Comic2Vec()
-        output = C2V.comic2vec(data, model_name, mode_out=mode_out, mode_auto=mode_auto)
+        output = img2vec(data, model_name, mode_out=mode_out, mode_auto=mode_auto)
         print(output.shape)
 
     elif mode == "use_created" and mode_auto == "AE":
@@ -39,6 +35,9 @@ def t_sne(mode, mode_auto, mode_out, img_load_dir):
 
     id = [i for i in range(output.shape[0])]
 
+    """
+    d1, d2, d3はそれぞれのクラス数になるように設定する．サンプルはデータ数240でクラス数が3(均等)．
+    """
     d1 = x_reduced[0:80]
     d1_id = id[0:80]
     d2 = x_reduced[80:160]
@@ -91,7 +90,7 @@ if __name__ == "__main__":
     # mode_out = "hw"
     # mode_out = "raw"
 
-    save_dir = "figures/t_sne"
+    save_dir = "figures/t_sne/"
     os.makedirs(save_dir, exist_ok=True)
 
     img_load_dir = os.path.join(os.getcwd(), "images")

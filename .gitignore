@@ -11,3 +11,13 @@
 *.txt
 *.xml
 *.iml
+.idea/
+weights/
+tflog/
+images/
+figures/
+distributed/
+decoded_imgs/
+MODEL/
+__pycache__/
+

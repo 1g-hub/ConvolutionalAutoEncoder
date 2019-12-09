@@ -1,7 +1,10 @@
 Convolutional Auto Encoder サンプルレポジトリ
 
+全体的に中身を読みつつ
+適宜データとラベルの実装をしてください．
+
 # Requirements
-requirements.txtに記載.インストールするために以下を実行(多分色々といらないパッケージとかも入る気がする)．
+requirements.txtに記載.インストールするために以下を実行(色々といらないパッケージとかも入る気がする)．
 
 ```
 $ pip install -r requirements.txt
@@ -9,7 +12,7 @@ $ pip install -r requirements.txt
 # レポジトリをクローン
 ```
 $ git clone https://github.com/1g-hub/ConvolutionalAutoEncoder
-cd ConvolutionalAutoEncoder
+$ cd ConvolutionalAutoEncoder
 ```
 
 ## 各ファイルの役割
@@ -27,7 +30,7 @@ cd ConvolutionalAutoEncoder
 - figures:lossとt-SNEの結果の画像
 - images: 学習データ
 - MODEL:学習したモデル構造や重み
-- tflog:tensorboardのeventファイル
+- tflog:tensorboardのeventファイル.作成にはmodel.pyのtbを指定．
 - weights:n epochごとの重み
 
 ## 実験の流れ
@@ -36,3 +39,11 @@ autoencoder.pyで分散表現を獲得し，その分散表現を用いてclassi
 $ python autoencoder.py
 $ python classify.py
 ```
+
+## 分散表現を2次元平面で可視化
+手法としてt-SNEを用いる．
+MODEL以下に分散表現が格納されていることを確認し，以下を実行．
+```
+$ python t_sne.py
+```
+figures/t_sne/ 内に画像が保存される．
