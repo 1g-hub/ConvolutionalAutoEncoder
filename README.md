@@ -25,7 +25,7 @@ $ cd ConvolutionalAutoEncoder
 
 ## 各フォルダの役割
 学習の結果できるフォルダもある．
-- decoded_imgs : エンコードされた画像とでコードされた画像を表示
+- decoded_imgs : エンコードされた画像とデコードされた画像を表示
 - distributed:学習した重みをnumpy形式で保存
 - figures:lossとt-SNEの結果の画像
 - images: 学習データ
