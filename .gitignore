@@ -8,7 +8,6 @@
 *.svg
 *.csv
 *.npy
-*.txt
 *.xml
 *.iml
 .idea/
